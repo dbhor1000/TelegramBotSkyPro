@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cglib.core.Local;
 import org.springframework.lang.Nullable;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.time.DateTimeException;
@@ -23,6 +24,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Component
 public class TelegramBotUpdatesListener implements UpdatesListener {
 
     private final Logger logger = LoggerFactory.getLogger(TelegramBotUpdatesListener.class);
@@ -58,7 +60,9 @@ public class TelegramBotUpdatesListener implements UpdatesListener {
     @Override
     public int process(List<Update> updates) {
         try {
-            updates.forEach(update -> {
+            updates.stream()
+                    .filter(update -> update.message() != null)
+                    .forEach(update -> {
                 logger.info("Handles update: {}", update);
                 Message message = update.message();
                 Long chatId = message.chat().id();
@@ -85,6 +89,7 @@ public class TelegramBotUpdatesListener implements UpdatesListener {
                         notificationTask.setMessage(txt);
                         notificationTask.setNotificationDateTime(dateTime);
                         notificationTaskService.save(notificationTask);
+                        sendMessage(chatId, "Задача успешно запланирована!");
                     } else {
                     sendMessage(chatId, "Некорректный формат сообщения.");
                     }
